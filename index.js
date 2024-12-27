@@ -1,6 +1,7 @@
 const fs = require('fs');
 const axios = require('axios');
 const { HttpsProxyAgent } = require('https-proxy-agent');
+const { SocksProxyAgent } = require('socks-proxy-agent');
 const readline = require('readline');
 
 const COLORS = {
@@ -20,25 +21,48 @@ function centerAlignText(text, width) {
 const consoleWidth = process.stdout.columns;
 console.log("");
 console.log(`${COLORS.BOLD_YELLOW}${centerAlignText("============================================", consoleWidth)}${COLORS.RESET}`);
-console.log(`${COLORS.BOLD_YELLOW}${centerAlignText("Kaisar zero node bot", consoleWidth)}${COLORS.RESET}`);
-console.log(`${COLORS.BOLD_YELLOW}${centerAlignText("github.com/recitativonika", consoleWidth)}${COLORS.RESET}`);
+console.log(`${COLORS.BOLD_YELLOW}${centerAlignText("reno-kaisar-bot", consoleWidth)}${COLORS.RESET}`);
+console.log(`${COLORS.BOLD_YELLOW}${centerAlignText("github.com/reno-ai2024", consoleWidth)}${COLORS.RESET}`);
 console.log(`${COLORS.BOLD_YELLOW}${centerAlignText("============================================", consoleWidth)}${COLORS.RESET}`);
 console.log("");
 
 function fetchConfigurationData() {
-    const data = fs.readFileSync('data.txt', 'utf8');
-    return data.split('\n').filter(line => line.trim() !== '').map(line => {
-        const [email, token, extensionId, proxy] = line.split(',');
-        return { email, token, extensionId, proxy };
-    });
+    try {
+        const emails = fs.readFileSync('emails.txt', 'utf8').split('\n').filter(line => line.trim() !== '');
+        const tokens = fs.readFileSync('tokens.txt', 'utf8').split('\n').filter(line => line.trim() !== '');
+        const extensionIds = fs.readFileSync('extensionIds.txt', 'utf8').split('\n').filter(line => line.trim() !== '');
+        const proxies = fs.readFileSync('proxies.txt', 'utf8').split('\n').filter(line => line.trim() !== '');
+
+        if (!emails.length || !tokens.length || !extensionIds.length || !proxies.length) {
+            throw new Error('One or more files are empty.');
+        }
+
+        return emails.map((email, index) => ({
+            email,
+            token: tokens[index],
+            extensionId: extensionIds[index],
+            proxy: proxies[index],
+        }));
+    } catch (error) {
+        console.error('Error reading configuration files:', error.message);
+        process.exit(1); 
+    }
 }
 
 function createUniqueApiClient(proxy, token, useProxy) {
-    if (useProxy && proxy && !/^https?:\/\//i.test(proxy)) {
+    if (useProxy && proxy && !/^https?:\/\//i.test(proxy) && !/^socks5:\/\//i.test(proxy)) {
         proxy = `http://${proxy}`;
     }
 
-    const agent = useProxy ? new HttpsProxyAgent(proxy) : undefined;
+    let agent;
+    if (useProxy && proxy) {
+        if (/^socks5:\/\//i.test(proxy)) {
+            agent = new SocksProxyAgent(proxy);
+        } else {
+            agent = new HttpsProxyAgent(proxy);
+        }
+    }
+
     return axios.create({
         baseURL: 'https://zero-api.kaisar.io/',
         headers: {
@@ -226,11 +250,6 @@ async function executePingAndUpdate(accountNumber, email, token, proxy, useProxy
         rl.close();
 
         const config = fetchConfigurationData();
-        if (config.length === 0) {
-            console.error("No configuration found in data.txt. Exiting...");
-            return;
-        }
-
         const lastExecution = {};
         const lastClaimTime = {};
 
