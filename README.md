@@ -29,15 +29,8 @@ This script automates registration, network or node operations and daily claim f
 
 ## Usage
 1. Register to Kaisar ZeroNode account first, if you don't have you can register [here](https://zero.kaisar.io/register?ref=xjxYQx032) or you can put email and password that you desire in to automatically register, check next part to do that. 
-2. Set and Modify `.txt` with your account data. If you don't have account, you can just put email and password that you want to register and it will automatically register account for you. Put the data in `user.txt` with format like this:
-	```bash
-	email1,password1,proxy1
-	email2,password2,proxy2
-	```
-	if you dont want to use proxy, you don't need to put the proxy.
+2. Set and Modify `emails.txt, tokens.txt, and extensionIds.txt` with your account data.
 
-    ```
-    if you not use proxy when registering account and want to use proxy when run the bot, you can add it manually
 3. Run the script:
 	```bash
 	node index.js
