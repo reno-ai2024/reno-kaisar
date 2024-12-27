@@ -1,2 +1,2 @@
 socks5://username:password@hostname:port
-https://username:password@hostname:port
+http://username:password@hostname:port
